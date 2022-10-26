@@ -26,14 +26,19 @@ class Safedeque {
         void push_back(T input);
         void pop_front();
         void pop_back();
-        Iterator<T> begin();
-        Iterator<T> end();
+        const Iterator<T> begin();
+        const Iterator<T> end();
         void print();
         void real_print();
-        
-    
+        T& operator[](int);
+            
+        // helper functions
+        T* endOfData();
+        T* startOfData();
+        void printData();
 
     
+        
     private:
         T* data;
         int cap;
@@ -43,48 +48,74 @@ class Safedeque {
         Iterator<T> iter;
         template<typename U>
         friend class Iterator;
-
+       
 };
 
 template<typename T>
 class Iterator {
-    
 
     public:
         Iterator();
         void operator++()       //prefix ++
         {
-            position++;
+            //assert(position != container->endOfData());
+            if (position == container->endOfData())
+            {
+                position = container->startOfData();
+            }
+            else
+            {
+                position++;
+            }
         }
         void operator++(int)    //postfix ++
         {
-            position++;
+            //assert(position != container->endOfData());
+            if (position == container->endOfData())
+            {
+                position = container->startOfData();
+            }
+            else
+            {
+                position++;
+            }
         }
         void operator--()       //prefix --
         {
+            //assert(position != container->startOfData());
             position--;
         }
         void operator--(int)    //postfix --
         {
+            //assert(position != container->startOfData());
             position--;
         }
-        T& operator*(size_t)
+        T& operator*()
         {
-            return position;
+            return *position;
         };
         void operator=(Iterator<T> const &rhs)
         {
             this->position = rhs.position;
             this->container = rhs.container;
         };
-        bool operator!=(Iterator<T> const &rhs) const;
-    
+        bool operator!=(Iterator<T> const &rhs) const
+        {
+            if (this->position != rhs.position)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        };
+
     private:
         T* position;
         Safedeque<T>* container;
         template<typename U>
         friend class Safedeque;
-    
 };
 
 /* START OF SAFEDEQUE IMPLEMENTATIONS */
@@ -98,34 +129,32 @@ Safedeque<T>::Safedeque() {
 
 template<typename T>
 T Safedeque<T>::get_front() {
+    
     return *front;
 }
 
 template<typename T>
 T Safedeque<T>::get_back() {
+    
     return *back;
 }
 
 template<typename T>
 void Safedeque<T>::push_front(T input) {
     
+    
     if (cap == 0)
     {
         cap++;
-        
         data = new T[cap];
-        
         data[0] = input;
         sz++;
         
         front = &data[0];
         back = &data[0];
         
-    
         std::cout << "One spot added. Current capacity: " << cap << std::endl;
-    
         return;
-        
     }
     
     if (cap == sz)
@@ -145,7 +174,6 @@ void Safedeque<T>::push_front(T input) {
             i++;
             frontMark++;
         }
-        
         
         while(i < sz+1)
         {
@@ -169,7 +197,7 @@ void Safedeque<T>::push_front(T input) {
     // if size of deque does not equal capacity:
     if (front == &data[0])
     {
-        front = &data[sz];
+        front = &data[cap-1];
         *front = input;
         sz++;
         return;
@@ -178,6 +206,8 @@ void Safedeque<T>::push_front(T input) {
     front--;
     *front = input;
     sz++;
+    
+
 }
 
 
@@ -261,26 +291,30 @@ void Safedeque<T>::pop_back() {
     sz--;
 }
 
-
 template<typename T>
-Iterator<T> Safedeque<T>::begin() {
+void Safedeque<T>::pop_front() {
     
-    iter.position = &data[0];
-    iter.container = this;
-    
-    return iter;
-    
+    front++;
+    sz--;
 }
 
+template<typename T>
+const Iterator<T> Safedeque<T>::begin() {
+    
+    iter.position = front; 
+    iter.container = this;
+    return iter;
+}
 
 template<typename T>
-Iterator<T> Safedeque<T>::end() {
+const Iterator<T> Safedeque<T>::end() {
     
-    iter.position = &data[cap];
+    T* afterBack = back;
+    afterBack++;
+    
+    iter.position = afterBack++;;
     iter.container = this;
-    
     return iter;
-    
 }
 
 template<typename T>
@@ -290,11 +324,9 @@ void Safedeque<T>::print() {
     T* untilEnd = &data[0];
     T* afterBack = back;
     afterBack++;
-    
     int counter = 0;
-    
 
-    while(frontMark != &data[sz] && counter < sz)
+    while(frontMark != &data[cap] && counter < sz)
     {
         std::cout << *frontMark << " ";
         frontMark++;
@@ -313,20 +345,68 @@ void Safedeque<T>::print() {
         std::cout << *untilEnd << " ";
         untilEnd++;
         counter++;
-
     }
     
     std::cout << std::endl;
-    
 }
 
 template<typename T>
 void Safedeque<T>::real_print() {
     
+    T* marker1 = &data[0];
+    T* marker2 = back;
+    marker2++;
+    
+    while (marker1 != marker2)
+    {
+        std::cout << *marker1 << " ";
+        marker1++;
+    }
+    
+    while (marker1 != front && marker1 != &data[cap])
+    {
+        std::cout << '*' << " ";
+        marker1++;
+    }
+    
+    while (marker1 != &data[cap])
+    {
+        std::cout << *marker1 << " ";
+        marker1++;
+    }
+    
+    std::cout << std::endl;
+}
+
+template<typename T>
+T& Safedeque<T>::operator[](int x)
+{
+    assert(x < cap);
+    T* index = &data[x];
+    return *index;
+}
+
+template<typename T>
+T* Safedeque<T>::endOfData() {
+    
+    return &data[cap-1];
+}
+
+template<typename T>
+T* Safedeque<T>::startOfData() {
+    
+    return &data[0];
+}
+
+template<typename T>
+void Safedeque<T>::printData() {
+    
     for (int i = 0; i < cap; i++)
     {
         std::cout << data[i] << " ";
     }
+    
+    std::cout << std::endl;
 }
 
 /* END OF SAFEDEQUE IMPLEMENTATIONS */

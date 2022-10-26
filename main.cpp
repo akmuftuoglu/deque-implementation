@@ -15,28 +15,38 @@ using namespace std;
 
 int main()
 {
-    cout << "********** print empty deque *********" << endl;
-    Safedeque<int> sd;
-    sd.print();
-    cout << "********** add elements *********" << endl;
-    // add elements
-    sd.push_front(1);
-    sd.push_front(2);
-    sd.pop_back();
-    sd.push_front(3);
-    sd.push_back(4);
-    sd.push_back(5);
-    sd.push_front(6);
-    sd.push_back(7);
-    sd.print();
-    cout << "********* real array elements**********" << endl;
+    Safedeque<char> sd;
+       
+        cout << "********** add elements *********" << endl;
+        // add elements
+        sd.push_front('5');
+        sd.push_front('4');
+        sd.push_front('3');
+        sd.push_back('6');
+        sd.push_back('7');
+        sd.push_front('2');
+        sd.push_front('1');
+        sd.push_back('8');
+        sd.push_back('9');
+        sd.push_front('0');
+        sd.push_front('-');
+        sd.push_back('A');
+        sd.push_back('B');
+        
     sd.real_print();
-    cout << "********** element squares *********" << endl;
+    cout << endl;
     
-    Iterator<int> iter1 = sd.begin();
-    Iterator<int> iter2 = sd.end();
-    
-    //cout << *iter1 << endl;
+        cout << "********** Test Iterators (must appear in this order) *********" <<
+    endl;
+        auto iter1 = sd.end();
+        iter1--;
+        iter1--;
+        auto iter2 = sd.begin();
+        iter2++;
+        iter2++;
+        ++iter2;
+        ++iter2;
+        for_each(iter2, iter1, [](char &x){cout<< x << " "; x = '!';});
     
     return 0;
     
