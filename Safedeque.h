@@ -20,28 +20,27 @@ class Safedeque {
     
     public:
         Safedeque();
-        T get_front();
-        T get_back();
+        T& get_front();
+        T& get_back();
         void push_front(T input);
         void push_back(T input);
         void pop_front();
         void pop_back();
         const Iterator<T> begin();
         const Iterator<T> end();
+        int size();
+        int capacity();
         void print();
         void real_print();
-        T& operator[](int);
+        T& operator[](int) const;
             
         // helper functions
-        T* endOfData();
-        T* startOfData();
+        T* endOfDataArray();
+        T* startOfDataArray();
         void printData();
-        T* afterEndOfData();
         int frontIndex();
         int backIndex();
 
-    
-        
     private:
         T* data;
         int cap;
@@ -57,8 +56,13 @@ class Safedeque {
 template<typename T>
 class Iterator {
 
+    // function implementations are put here because they are shorter and easier to locate
     public:
-        Iterator();
+        Iterator()
+        {
+            container = nullptr;
+            position = nullptr;
+        };
         void operator++()       //prefix ++
         {
             T* afterBack = container->back;
@@ -66,25 +70,25 @@ class Iterator {
             
             assert(position != afterBack);
             
-            if (position == container->endOfData())
+            if (position == container->endOfDataArray())
             {
-                position = container->startOfData();
+                position = container->startOfDataArray();
             }
             else
             {
                 position++;
             }
+            
         }
         void operator++(int)    //postfix ++
         {
             T* afterBack = container->back;
             afterBack++;
-            
             assert(position != afterBack);
             
-            if (position == container->endOfData())
+            if (position == container->endOfDataArray())
             {
-                position = container->startOfData();
+                position = container->startOfDataArray();
             }
             else
             {
@@ -93,16 +97,40 @@ class Iterator {
         }
         void operator--()       //prefix --
         {
-            //assert(position != container->startOfData());
-            position--;
+            T* afterBack = container->back;
+            afterBack++;
+            
+            assert(position != container->front);
+            if (position == container->startOfData())
+            {
+                position = afterBack;
+            }
+            else
+            {
+                position--;
+            }
         }
         void operator--(int)    //postfix --
         {
-            //assert(position != container->startOfData());
-            position--;
+            T* afterBack = container->back;
+            afterBack++;
+            
+            assert(position != container->front);
+            
+            if (position == container->startOfDataArray())
+            {
+                position = afterBack;
+            }
+            else
+            {
+                position--;
+            }
         }
         T& operator*()
         {
+            T* afterBack = container->back;
+            afterBack++;
+            assert(position != afterBack);
             return *position;
         };
         void operator=(Iterator<T> const &rhs)
@@ -139,15 +167,17 @@ Safedeque<T>::Safedeque() {
 }
 
 template<typename T>
-T Safedeque<T>::get_front() {
+T& Safedeque<T>::get_front() {
     
-    return *front;
+    assert(sz != 0);
+    return *front;  // fix
 }
 
 template<typename T>
-T Safedeque<T>::get_back() {
+T& Safedeque<T>::get_back() {
     
-    return *back;
+    assert(sz != 0);
+    return *back;   // fix
 }
 
 template<typename T>
@@ -264,7 +294,6 @@ void Safedeque<T>::push_back(T input) {
             frontMark++;
         }
         
-        
         while(i < sz)
         {
             temp[i] = *restOfData;
@@ -272,12 +301,10 @@ void Safedeque<T>::push_back(T input) {
             restOfData++;
         }
         
-        
         data = temp;
         back = &data[sz];
         front = &data[0];
         sz++;
-        
     
         std::cout << "Capacity doubled. Current capacity: " << cap << std::endl;
         
@@ -298,6 +325,8 @@ void Safedeque<T>::push_back(T input) {
 template<typename T>
 void Safedeque<T>::pop_back() {
     
+    assert(sz != 0);
+    
     if (back == &data[0])
     {
         back = &data[cap-1];
@@ -309,6 +338,8 @@ void Safedeque<T>::pop_back() {
 
 template<typename T>
 void Safedeque<T>::pop_front() {
+    
+    assert(sz != 0);
     
     if (front == &data[cap-1])
     {
@@ -333,47 +364,63 @@ const Iterator<T> Safedeque<T>::end() {
     T* afterBack = back;
     afterBack++;
     
-    iter.position = afterBack++;;
+    iter.position = afterBack;
     iter.container = this;
     return iter;
 }
 
 template<typename T>
+int Safedeque<T>::size() {
+    return sz;
+}
+
+template<typename T>
+int Safedeque<T>::capacity() {
+    return cap;
+}
+
+template<typename T>
 void Safedeque<T>::print() {
     
-    T* printer = front;
-    T* afterLastElement = back;
-    afterLastElement++;
-    int printedCount = 0;
-    
-    while(printer != &data[cap] && printer != afterLastElement && printedCount != sz)
-    {
-        std::cout << *printer << " ";
-        printedCount++;
-        printer++;
-    }
-    
-    if (printedCount == sz)
+    if (cap == 0)
     {
         std::cout << std::endl;
         return;
     }
     
-    if (printer == &data[cap])
+    if (frontIndex() > backIndex())
     {
-        printer = &data[0];
-        
-        while (printer != afterLastElement && printedCount != sz)
+        for (int i = frontIndex(); i < cap; i++)
         {
-            std::cout << *printer << " ";
-            printedCount++;
-            printer++;
+            std::cout << data[i] << " ";
         }
+        
+        for (int i = 0; i < backIndex()+1; i++)
+        {
+            std::cout << data[i] << " ";
+        }
+        
+        std::cout << std::endl;
+        return;
+    }
+    else if (frontIndex() < backIndex())
+    {
+        for (int i = frontIndex(); i < backIndex()+1; i++)
+        {
+            std::cout << data[i] << " ";
+        }
+        
+        std::cout << std::endl;
+        return;
+    }
+    else // size is 1
+    {
+        std::cout << data[frontIndex()] << " ";
+        std::cout << std::endl;
+        return;
     }
     
-    std::cout << std::endl;
 }
-
 
 template<typename T>
 void Safedeque<T>::real_print() {
@@ -438,7 +485,7 @@ void Safedeque<T>::real_print() {
 }
 
 template<typename T>
-T& Safedeque<T>::operator[](int x)
+T& Safedeque<T>::operator[](int x) const
 {
     assert(x < cap);
     T* index = &data[x];
@@ -449,14 +496,14 @@ T& Safedeque<T>::operator[](int x)
 // helper functions
 
 template<typename T>
-T* Safedeque<T>::endOfData() {
+T* Safedeque<T>::endOfDataArray() {
     
     return &data[cap-1];
 }
 
 
 template<typename T>
-T* Safedeque<T>::startOfData() {
+T* Safedeque<T>::startOfDataArray() {
     
     return &data[0];
 }
@@ -471,14 +518,6 @@ void Safedeque<T>::printData() {
     
     std::cout << std::endl;
 }
-
-
-template<typename T>
-T* Safedeque<T>::afterEndOfData() {
-    
-    return &data[cap];
-}
-
 
 template<typename T>
 int Safedeque<T>::frontIndex() {
@@ -506,17 +545,5 @@ int Safedeque<T>::backIndex()
 
 /* END OF SAFEDEQUE IMPLEMENTATIONS */
 
-/* START OF ITERATOR IMPLEMENTATIONS */
-
-template<typename T>
-Iterator<T>::Iterator() {
-    
-    container = nullptr;
-    position = nullptr;
-
-}
-
-
-/* END OF ITERATOR IMPLEMENTATIONS */
 
 #endif /* Safedeque_h */
